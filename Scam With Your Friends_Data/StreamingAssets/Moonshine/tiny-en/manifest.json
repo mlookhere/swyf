@@ -1,0 +1,31 @@
+{
+  "repository": "onnx-community/moonshine-tiny-ONNX",
+  "revision": "a6da1241cd305dcd64eab1edbd615f2bb9aabb95",
+  "files": {
+    "encoder.onnx": {
+      "source": "onnx/encoder_model.onnx",
+      "sha256": "cbbf580f703b2af2137e0f6d14cd87f31cc67bd858bfd8715403a9489982d1a5",
+      "bytes": 30882331
+    },
+    "decoder.onnx": {
+      "source": "onnx/decoder_model_merged_int8.onnx",
+      "sha256": "bd126e9e95c62b2236116f676f80877ddde488599631014149f92196cd8ae3a7",
+      "bytes": 20189512
+    },
+    "tokenizer.json": {
+      "source": "tokenizer.json",
+      "sha256": "7b913404bdd039af4756783218af4440bc07fb7d6d8258d677e34f95b3ec416f",
+      "bytes": 3761754
+    },
+    "config.json": {
+      "source": "config.json",
+      "sha256": "558e1e02069137c796ace1e50c48d8fe451f04a295929138e6bea885517f0edb",
+      "bytes": 921
+    },
+    "generation_config.json": {
+      "source": "generation_config.json",
+      "sha256": "f9b3f711b57be7def2e50a8942f64f36ee0a55fad5b84ff93a687b6c5bcc1d44",
+      "bytes": 147
+    }
+  }
+}

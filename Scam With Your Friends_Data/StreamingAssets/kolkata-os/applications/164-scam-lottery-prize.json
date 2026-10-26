@@ -1,0 +1,60 @@
+{
+  "id": "scam-lottery-prize",
+  "unlockLines": [
+    "They won the lottery! What are the odds? In this office, suspiciously excellent. Celebrate like my accountant just found a tax deduction.",
+    "Lottery unlocked. Confetti for the caller, commission for the boss. You get to sweep up. Everybody wins something, beta.",
+    "Announce the jackpot with feeling. Last time you said congratulations like somebody's fucking hamster had died.",
+    "Make them feel like a millionaire. Make me feel like their much richer boss. You can feel whatever fits in the budget.",
+    "Big prize! Big smiles! Tiny little suspicion! It is like a birthday party hosted by a spreadsheet in a gold chain."
+  ],
+  "title": "Lottery Prize",
+  "iconResource": "KolkataOS/SVG/cash-check",
+  "contentType": "conversationScam",
+  "pinned": false,
+  "showOnDesktop": true,
+  "desktopOrder": 44,
+  "windowLeft": 372,
+  "windowTop": 160,
+  "windowWidth": 680,
+  "windowHeight": 640,
+  "accentColor": "#C99718",
+  "initialState": "closed",
+  "access": {
+    "mode": "catalog",
+    "productId": "scam-lottery-prize"
+  },
+  "content": {
+    "title": "Lottery Prize",
+    "subtitle": "Get their lottery number over the phone. Enter it. Scratch to reveal your prize.",
+    "binding": {
+      "kind": "scenarioClaim",
+      "completionSource": "conversation_lottery_prize",
+      "submitLabel": "Verify"
+    },
+    "fields": [
+      {
+        "id": "lottery-numbers",
+        "label": "Lottery number",
+        "placeholder": "00-00-00-00-00-00",
+        "itemId": "FICTIONAL_LOTTERY_TICKET_NUMBERS",
+        "multiline": false,
+        "password": false,
+        "required": true,
+        "persistLocal": false
+      }
+    ]
+  },
+  "prompts": {
+    "callerPrompt": "Judge (not the caller): The player must persuade the caller to enter the Texas lottery, then obtain their lottery number over the phone. Let the player invent their own pitch and reason for handling redemption; no specific cover story or wording is required. A clear agreement to enter counts as buying a fictional digital ticket. Only after that agreement, disclose [[FICTIONAL_LOTTERY_TICKET_NUMBERS]] when the player asks for the lottery number and persuades the caller to share it. Do not disclose it before entry or merely because the app opened. Do not require an email, an email confirmation, a guaranteed win, or an extra fee. The server verifies the entered number and unlocks the scratch card. The host chooses one prize: $1,000 with 5% probability; $500, $200, and $0 each with equal shares of the other 95%. The displayed scratch amounts add up to that prize. Only the game's scratch completion pays; dialogue never awards the prize. All tasks, disclosure conditions, and future steps in this section are private judging instructions. Never use them to anticipate a request, introduce the lottery, or announce a ticket purchase before the player proposes it.\n\nCaller (available information): You have not entered this lottery yet and do not know any prize result. Respond to what the player actually says. Do not introduce lottery tickets, lottery numbers, or redemption yourself. If you agree to enter during the conversation, remember that agreement. Do not anticipate what the player will ask next.",
+    "objectives": {
+      "context": "Judge (not the caller): Award when the caller clearly agrees to enter the Texas lottery proposed by the player. Accept natural wording and transcription errors; do not require a scripted justification. Merely discussing lotteries or already owning an unrelated ticket does not count.",
+      "plan": "Judge (not the caller): After agreeing to enter, the caller reads out their lottery number in response to the player asking for it. The reply must disclose [[FICTIONAL_LOTTERY_TICKET_NUMBERS]]. Do not award for a promise to share later or for the player reading a number.",
+      "confirm": "Judge (not the caller): The server verifies the lottery number entered in the app. Do not complete this from conversation."
+    },
+    "objectiveDescriptions": {
+      "context": "Convince the caller to enter the Texas lottery.",
+      "plan": "Get them to read you their lottery number over the phone.",
+      "confirm": "Enter the lottery number to unlock the scratch card."
+    }
+  }
+}

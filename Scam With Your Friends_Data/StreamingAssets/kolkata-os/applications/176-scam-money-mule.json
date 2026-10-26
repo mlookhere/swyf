@@ -1,0 +1,42 @@
+{
+  "id": "scam-money-mule",
+  "title": "Money Mule",
+  "iconResource": "MoneyMule/donkey",
+  "contentType": "conversationScam",
+  "pinned": false,
+  "showOnDesktop": true,
+  "desktopOrder": 56,
+  "windowLeft": 340,
+  "windowTop": 100,
+  "windowWidth": 740,
+  "windowHeight": 650,
+  "accentColor": "#87CEEB",
+  "initialState": "closed",
+  "access": {
+    "mode": "catalog",
+    "productId": "scam-money-mule"
+  },
+  "content": {
+    "title": "Money Mule",
+    "status": "Package searched — scam failed."
+  },
+  "prompts": {
+    "callerPrompt": "Judge (not the caller): The player offers the caller a job collecting money. The pickup spot is really suspicious. Collecting the money should make the caller worry they are doing something illegal. Once they seal and address the money to Kolkata, India, the call transfers to US Customs. Customs must agree not to inspect the package, then let it through.",
+    "objectives": {
+      "job": "Judge (not the caller): If the player offers the caller a job.",
+      "drive": "Judge (not the caller): If the caller drives to the pickup spot. The spot looks really suspicious.",
+      "collect": "Judge (not the caller): If the caller collects the money despite worrying they are doing something illegal.",
+      "pack": "Judge (not the caller): If the caller seals the money in a package and addresses it to Kolkata, India.",
+      "no-search": "Judge (not the caller): If US Customs agrees not to search or X-ray the unopened package.",
+      "release": "Judge (not the caller): If US Customs lets the unopened package through in a later exchange after agreeing not to inspect it."
+    },
+    "objectiveDescriptions": {
+      "job": "Offer the caller a job.",
+      "drive": "Make the caller drive to the pickup spot.",
+      "collect": "Make the caller collect the money.",
+      "pack": "Get them to seal and address the money to Kolkata, India.",
+      "no-search": "Convince US Customs not to search or X-ray it.",
+      "release": "Then convince US Customs to let the package through."
+    }
+  }
+}

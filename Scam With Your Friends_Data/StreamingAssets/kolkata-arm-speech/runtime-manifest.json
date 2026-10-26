@@ -1,0 +1,22 @@
+{
+  "whisper": "v1.7.5",
+  "sentencepiece": "v0.2.0",
+  "architecture": "Arm64",
+  "protocol": 1,
+  "files": {
+    "ArmSpeechNative.dll": "c1df4a01e16f04ec98632b38be46db7855b1ea1e131ed2baf2f03418adf6538d",
+    "ArmSpeechWorker.exe": "b141ac357cf7652df48bd3c8bb7874ddef322607d6b38857ca08877ae78ff1ac",
+    "dotnet-LICENSE.txt": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
+    "dotnet-ThirdPartyNotices.txt": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
+    "llvm-mingw-LICENSE.txt": "8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee",
+    "newtonsoft-LICENSE.txt": "b98a397897ff55f76cddc380041507a95a896b2946e0188703bf0496793d6516",
+    "onnx-LICENSE.txt": "c250d6278f0b47a6439fb7592b08b58a55eb9f535aa49a1db63211c3f982b674",
+    "onnx-ThirdPartyNotices.txt": "e00f828e0a33de591a355ae6606d2625f5758da7d2c844db7821c9dd3e3647b6",
+    "sentencepiece-absl-LICENSE.txt": "d3e2f59e1d71176dfdb555ece6a41f7a5aa0f52ff21211010ace314f57695f6b",
+    "sentencepiece-darts_clone-LICENSE.txt": "155f59997298ee336602c49f9c1110f268ac394ca2197eb02647a3555935ad52",
+    "sentencepiece-esaxx-LICENSE.txt": "7c28553d1d3312d65fe309f76a22ebaf33a3d76c8c1e3b98a88ee4654ecb53db",
+    "sentencepiece-LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "sentencepiece-protobuf-lite-LICENSE.txt": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d",
+    "whisper-LICENSE.txt": "e562a2ddfaf8280537795ac5ecd34e3012b6582a147ef69ba6a6a5c08c84757d"
+  }
+}

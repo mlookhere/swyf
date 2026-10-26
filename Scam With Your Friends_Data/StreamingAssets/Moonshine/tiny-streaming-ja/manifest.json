@@ -1,0 +1,48 @@
+{
+  "language": "ja",
+  "architecture": "tiny-streaming",
+  "license": "MIT",
+  "runtime_version": "0.1.5",
+  "files": {
+    "adapter.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/adapter.ort",
+      "bytes": 1318472,
+      "sha256": "25f302e6203028e487d1b1f93db6fe5baf587373498062190160de70e0c4ae58"
+    },
+    "cross_kv.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/cross_kv.ort",
+      "bytes": 1288120,
+      "sha256": "170ee70aeb3c82fd067193add0d1a8619cd16d4de80a5e0239dac12d956e8575"
+    },
+    "decoder_kv.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/decoder_kv.ort",
+      "bytes": 19717336,
+      "sha256": "ccc047610727f9fe039212a0b2370a7f970e80776376a229181a76998ff5af20"
+    },
+    "encoder.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/encoder.ort",
+      "bytes": 7772792,
+      "sha256": "6420c180be55732d10db7a85f8966237bbbeee3b47addab4790ed81c22dde2cf"
+    },
+    "frontend.model.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/frontend.model.ort",
+      "bytes": 27608,
+      "sha256": "c6fdee4c81d421617b9571e43cf952dc1e7e4f45d0cb1dbf13104ee8af4ffd45"
+    },
+    "frontend.weights.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/frontend.weights.ort",
+      "bytes": 2093288,
+      "sha256": "673a7177f030da9ce948daa1af44ec5425b6f0825348aacb80f6a01c18e42a07"
+    },
+    "streaming_config.json": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/streaming_config.json",
+      "bytes": 509,
+      "sha256": "d31afd7c2dd5ee9ae3fa232312c5b42cb3e4fe1c6e9c53d885f2bea63023790a"
+    },
+    "tokenizer.bin": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-ja/quantized_26_08_23/tokenizer.bin",
+      "bytes": 101836,
+      "sha256": "9f2599f20c3a9b03d79dbe122e443647c6589ce8e5c73e65e5c5d6f73485d5de"
+    }
+  }
+}

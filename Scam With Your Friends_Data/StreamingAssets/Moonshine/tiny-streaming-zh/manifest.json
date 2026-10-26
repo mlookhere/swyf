@@ -1,0 +1,48 @@
+{
+  "language": "zh",
+  "architecture": "tiny-streaming",
+  "license": "MIT",
+  "runtime_version": "0.1.5",
+  "files": {
+    "adapter.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/adapter.ort",
+      "bytes": 1318472,
+      "sha256": "84d1bed88310f5b6dd452203bcaffb765f017a7d06da8d84a898235ef5c90e12"
+    },
+    "cross_kv.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/cross_kv.ort",
+      "bytes": 1288120,
+      "sha256": "22c2261f3120b766a91deceb4f32ca0bef0a8f2b181509ad0dc9fe6adbd0c23a"
+    },
+    "decoder_kv.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/decoder_kv.ort",
+      "bytes": 19717336,
+      "sha256": "5caf9e4e9eaa39b93122338bfbad2917630afc51293f6229b935ae7df28bed33"
+    },
+    "encoder.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/encoder.ort",
+      "bytes": 7772792,
+      "sha256": "4270ca0e1ecd10e78d658b08b91d81c7f913511177e1ad461c8a9d9d0903503d"
+    },
+    "frontend.model.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/frontend.model.ort",
+      "bytes": 27608,
+      "sha256": "d27a9c994b43fa6568121f502e8b99d511ffd0425d4090ffddcc82c9a5667971"
+    },
+    "frontend.weights.ort": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/frontend.weights.ort",
+      "bytes": 2090728,
+      "sha256": "ac56e8ee7780e1f254ee26f2d9c9a3b3c6cfd2f6822cb3944924ae321f86dc50"
+    },
+    "streaming_config.json": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/streaming_config.json",
+      "bytes": 509,
+      "sha256": "d31afd7c2dd5ee9ae3fa232312c5b42cb3e4fe1c6e9c53d885f2bea63023790a"
+    },
+    "tokenizer.bin": {
+      "url": "https://download.moonshine.ai/model/tiny-streaming-zh/quantized_26_08_24/tokenizer.bin",
+      "bytes": 74587,
+      "sha256": "f172da002a818b9968d5c7a995cc7c51acf2168331ab5f914b5b0860ceab8236"
+    }
+  }
+}
