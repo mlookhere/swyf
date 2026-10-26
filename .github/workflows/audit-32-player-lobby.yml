@@ -95,6 +95,30 @@ jobs:
           if len(hits) > 220:
               print("...remaining references omitted from console; inspect decompilation locally for full coverage")
           PY
+      - name: Check main-menu and in-game lobby selector construction
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "swyf-audit/ScriptsAssDef"
+          slices = {
+              "MainMenuToolkitController.cs": [(1210,1275),(1835,1858)],
+              "PauseMenuToolkitController.cs": [(1525,1570),(1595,1630)],
+              "HostUIManager.cs": [(1,130)],
+              "JoinPublicLogic.cs": [(1,130)]
+          }
+          for rel, ranges in slices.items():
+              path = root / rel
+              if not path.exists():
+                  print("NOT FOUND:", rel)
+                  continue
+              lines = path.read_text(encoding="utf-8").splitlines()
+              for start, end in ranges:
+                  print(f"===== {rel}:{start}-{end} =====")
+                  for i in range(start-1, min(end,len(lines))):
+                      print(f"{i+1}: {lines[i]}")
+          PY
       - name: Build and test reversible 32-player patcher
         shell: bash
         run: |
