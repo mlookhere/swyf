@@ -42,6 +42,30 @@ jobs:
         shell: bash
         run: |
           python3 tools/audit_lobby.py "$RUNNER_TEMP/swyf-audit" "$RUNNER_TEMP/lobby-audit.md"
+      - name: Examine host-limit implementation and settings paths
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "swyf-audit"
+          sections = {
+              "ScriptsAssDef/MaxLobbySizeSetting.cs": [(1, 330)],
+              "ScriptsAssDef/SteamCreateLobbyForServer.cs": [(245, 290), (340, 385), (440, 485)],
+              "ScriptsAssDef/DeveloperSpectatorNetworkManager.cs": [(30, 85)],
+              "ScriptsAssDef/MetaFizzySteamworks.cs": [(432, 460), (1217, 1245)],
+          }
+          for rel, ranges in sections.items():
+              path = root / rel
+              if not path.is_file():
+                  print(f"Missing file: {rel}")
+                  continue
+              lines = path.read_text(encoding="utf-8").splitlines()
+              for start, end in ranges:
+                  print(f"====== {rel}:{start}-{end} ======")
+                  for n in range(start, min(end, len(lines)) + 1):
+                      print(f"{n}: {lines[n-1]}")
+          PY
       - name: Upload inspection report (no decompiled source)
         if: always()
         uses: actions/upload-artifact@v4
