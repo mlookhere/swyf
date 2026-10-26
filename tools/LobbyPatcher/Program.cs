@@ -50,9 +50,18 @@ catch (Exception ex)
     return 1;
 }
 
-static AssemblyDefinition Open(string path) =>
-    AssemblyDefinition.ReadAssembly(path,
-        new ReaderParameters { ReadSymbols = false, ReadingMode = ReadingMode.Immediate });
+static AssemblyDefinition Open(string path)
+{
+    var resolver = new DefaultAssemblyResolver();
+    resolver.AddSearchDirectory(Path.GetDirectoryName(path)!);
+    return AssemblyDefinition.ReadAssembly(path,
+        new ReaderParameters
+        {
+            AssemblyResolver = resolver,
+            ReadSymbols = false,
+            ReadingMode = ReadingMode.Deferred
+        });
+}
 
 static TypeDefinition FindType(AssemblyDefinition assembly, string name) =>
     assembly.MainModule.Types.Single(t => t.Name == name);
