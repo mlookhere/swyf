@@ -67,6 +67,34 @@ jobs:
                   for n in range(start, min(end, len(lines)) + 1):
                       print(f"{n}: {lines[n-1]}")
           PY
+      - name: Scan remaining eight-player assumptions and UI bindings
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "swyf-audit"
+          hints = re.compile(r"lobby|player|join|spawn|network|steam|roster|capacity|desk|seat|voice", re.I)
+          hardcoded = re.compile(r"(?<!\d)8(?!\d)|MaxLobbySizeSetting|LobbySizeOptionCount|GetSelectedIndex", re.I)
+          paths = sorted(root.rglob("*.cs"))
+          hits = []
+          for file in paths:
+              if file.stem.endswith(("Test", "Example")):
+                  continue
+              lines = file.read_text(encoding="utf-8", errors="replace").splitlines()
+              for n, line in enumerate(lines):
+                  if not hardcoded.search(line):
+                      continue
+                  neighbors = " ".join(lines[max(0,n-2):min(len(lines),n+3)])
+                  if hints.search(line) or (hints.search(file.stem) and hints.search(neighbors)):
+                      hits.append((file.relative_to(root), n + 1, line.strip()[:220]))
+          print("Potential remaining 8-player/UI binding references:", len(hits))
+          for path, number, line in hits[:220]:
+              print(f"{path}:{number}: {line}")
+          if len(hits) > 220:
+              print("...remaining references omitted from console; inspect decompilation locally for full coverage")
+          PY
       - name: Build and test reversible 32-player patcher
         shell: bash
         run: |
