@@ -156,6 +156,52 @@ static void ReplaceOptions(TypeDefinition type)
     Console.WriteLine("Patched UI options to contiguous 1..32 (preserves selected-index mapping).");
 }
 
+static void PatchInGameDropdown(TypeDefinition type)
+{
+    const string dropdownName = "host-lobby-size-dropdown";
+    var target = type.Methods.Single(method => method.HasBody
+        && method.Body.Instructions.Any(i =>
+            i.OpCode.Code == Code.Ldstr && Equals(i.Operand, dropdownName))
+        && method.Body.Instructions.Any(i =>
+            i.Operand is MethodReference call && call.Name == "set_choices"));
+    var instructions = target.Body.Instructions;
+    int anchor = instructions.ToList().FindIndex(i =>
+        i.OpCode.Code == Code.Ldstr && Equals(i.Operand, dropdownName));
+    var setter = instructions.Skip(anchor).First(i => i.Operand is MethodReference call
+        && call.Name == "set_choices"
+        && call.Parameters.Count == 1);
+    int setterIndex = instructions.IndexOf(setter);
+    var methods = instructions.Take(setterIndex)
+        .Select(i => i.Operand).OfType<MethodReference>().ToArray();
+    var constructor = methods.Last(m => m.Name == ".ctor"
+        && m.DeclaringType.FullName.StartsWith("System.Collections.Generic.List\x60" + "1<System.String>", StringComparison.Ordinal));
+    var add = methods.Last(m => m.Name == "Add"
+        && m.DeclaringType.FullName.StartsWith("System.Collections.Generic.List\x60" + "1<System.String>", StringComparison.Ordinal));
+
+    if (!Enumerable.Range(1, 8).All(n => instructions.Take(setterIndex).Any(
+        i => i.OpCode.Code == Code.Ldstr && Equals(i.Operand, n.ToString()))))
+        throw new InvalidOperationException("Pause-menu lobby size choices do not match expected 1..8 shape.");
+
+    var setterRef = (MethodReference)setter.Operand;
+    var optionsType = type.Module.ImportReference(setterRef.Parameters[0].ParameterType);
+    var helper = new MethodDefinition("SWYF32_GetLobbySizeChoices",
+        MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig, optionsType);
+    helper.Parameters.Add(new ParameterDefinition("oldChoices", ParameterAttributes.None, optionsType));
+    type.Methods.Add(helper);
+
+    var gen = helper.Body.GetILProcessor();
+    gen.Append(Instruction.Create(OpCodes.Newobj, constructor));
+    for (int i = 1; i <= TargetSize; i++)
+    {
+        gen.Append(Instruction.Create(OpCodes.Dup));
+        gen.Append(Instruction.Create(OpCodes.Ldstr, i.ToString()));
+        gen.Append(Instruction.Create(OpCodes.Callvirt, add));
+    }
+    gen.Append(Instruction.Create(OpCodes.Ret));
+    target.Body.GetILProcessor().InsertBefore(setter, Instruction.Create(OpCodes.Call, helper));
+    Console.WriteLine("Patched in-game pause-menu dropdown choices to 1..32.");
+}
+
 static bool Has32Options(TypeDefinition type)
 {
     var cctor = FindMethod(type, ".cctor");
@@ -196,7 +242,15 @@ static void Verify(AssemblyDefinition assembly)
     if (!FindMethod(manager, "Awake").Body.Instructions.Any(i => Constant(i) == TargetSize))
         throw new InvalidOperationException("NetworkManager initial capacity not patched.");
 
-    Console.WriteLine("Verified 32-player UI, persisted preferences, Mirror, and Steam lobby limits.");
+    var pause = FindType(assembly, "PauseMenuToolkitController");
+    var helper = pause.Methods.SingleOrDefault(m => m.Name == "SWYF32_GetLobbySizeChoices");
+    if (helper == null || !helper.HasBody
+        || helper.Body.Instructions.Count(i => i.OpCode.Code == Code.Ldstr
+            && i.Operand is string value && int.TryParse(value, out int n)
+            && n >= 1 && n <= TargetSize) != TargetSize)
+        throw new InvalidOperationException("In-game lobby dropdown is not extended to 32.");
+
+    Console.WriteLine("Verified 32-player UI (both menus), persisted preferences, Mirror, and Steam lobby limits.");
     Console.WriteLine("Real 9/16/32-player online compatibility is NOT established by this binary check.");
 }
 
@@ -234,6 +288,7 @@ static void Apply(string originalPath, string backupPath)
                 PatchClamp(max, name);
             PatchClamp(FindType(assembly, "SteamCreateLobbyForServer"), "TryApplyLobbyMemberLimitFromHostSettings");
             PatchOriginalMaxConnections(FindType(assembly, "DeveloperSpectatorNetworkManager"));
+            PatchInGameDropdown(FindType(assembly, "PauseMenuToolkitController"));
             Verify(assembly);
             assembly.Write(temporaryPath, new WriterParameters { WriteSymbols = false });
         }
