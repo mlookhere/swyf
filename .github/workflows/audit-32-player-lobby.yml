@@ -6,6 +6,7 @@ on:
       - audit/32-player-lobby
     paths:
       - 'tools/audit_lobby.py'
+      - 'tools/LobbyPatcher/**'
       - '.github/workflows/audit-32-player-lobby.yml'
   workflow_dispatch:
 
@@ -66,6 +67,44 @@ jobs:
                   for n in range(start, min(end, len(lines)) + 1):
                       print(f"{n}: {lines[n-1]}")
           PY
+      - name: Build and test reversible 32-player patcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet build tools/LobbyPatcher/LobbyPatcher.csproj -c Release
+          game="$RUNNER_TEMP/swyf-patch-test"
+          managed="$game/Scam With Your Friends_Data/Managed"
+          mkdir -p "$managed"
+          cp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$managed/ScriptsAssDef.dll"
+          dotnet run --no-build -c Release --project tools/LobbyPatcher -- --inspect "$game"
+          dotnet run --no-build -c Release --project tools/LobbyPatcher -- --apply "$game"
+          dotnet run --no-build -c Release --project tools/LobbyPatcher -- --verify "$game"
+          cmp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$managed/ScriptsAssDef.dll.before-32-player-patch.bak"
+          ilspycmd -p -o "$RUNNER_TEMP/swyf-patched-decompiled" "$managed/ScriptsAssDef.dll"
+          python3 - "$RUNNER_TEMP/swyf-patched-decompiled" <<'PY'
+          from pathlib import Path
+          import sys
+          root = Path(sys.argv[1])
+          setting = (root / "MaxLobbySizeSetting.cs").read_text()
+          steam = (root / "SteamCreateLobbyForServer.cs").read_text()
+          assert "MaximumLobbySize = 32" in setting
+          assert "Mathf.Clamp(lobbySize, 1, 32)" in setting
+          assert 'GetInt("HostSettings.MaxLobbySize"), 1, 32' in setting
+          assert "Mathf.Clamp(value, 1, 32)" in steam
+          print("Verified patched decompilation has 32-person caps.")
+          PY
+          dotnet run --no-build -c Release --project tools/LobbyPatcher -- --restore "$game"
+          cmp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$managed/ScriptsAssDef.dll"
+      - name: Build Windows patcher utility (not vendor DLL)
+        shell: bash
+        run: |
+          dotnet publish tools/LobbyPatcher/LobbyPatcher.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o "$RUNNER_TEMP/swyf-patcher-windows"
+      - name: Upload Windows patch utility
+        uses: actions/upload-artifact@v4
+        with:
+          name: swyf-lobby-patcher-win-x64
+          path: ${{ runner.temp }}/swyf-patcher-windows/
+          retention-days: 7
       - name: Upload inspection report (no decompiled source)
         if: always()
         uses: actions/upload-artifact@v4
