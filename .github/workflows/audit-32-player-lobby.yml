@@ -1,0 +1,52 @@
+name: Audit 32-player lobby dependencies
+
+on:
+  push:
+    branches:
+      - audit/32-player-lobby
+    paths:
+      - 'tools/audit_lobby.py'
+      - '.github/workflows/audit-32-player-lobby.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Inspect compiled Unity game networking
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install ILSpy command-line decompiler
+        run: |
+          dotnet tool install --global ilspycmd
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      - name: Decompile game-owned assemblies to temporary workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="Scam With Your Friends_Data/Managed"
+          for name in Assembly-CSharp ScriptsAssDef; do
+            test -s "$root/$name.dll"
+            mkdir -p "$RUNNER_TEMP/swyf-audit/$name"
+            ilspycmd -p -o "$RUNNER_TEMP/swyf-audit/$name" "$root/$name.dll"
+          done
+      - name: Report lobby limit and networking references
+        shell: bash
+        run: |
+          python3 tools/audit_lobby.py "$RUNNER_TEMP/swyf-audit" "$RUNNER_TEMP/lobby-audit.md"
+      - name: Upload inspection report (no decompiled source)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swyf-32-player-audit
+          path: ${{ runner.temp }}/lobby-audit.md
+          if-no-files-found: warn
+          retention-days: 7
