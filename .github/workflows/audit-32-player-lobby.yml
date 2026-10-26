@@ -75,7 +75,7 @@ jobs:
           game="$RUNNER_TEMP/swyf-patch-test"
           managed="$game/Scam With Your Friends_Data/Managed"
           mkdir -p "$managed"
-          cp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$managed/ScriptsAssDef.dll"
+          cp "Scam With Your Friends_Data/Managed/"*.dll "$managed/"
           dotnet run --no-build -c Release --project tools/LobbyPatcher -- --inspect "$game"
           dotnet run --no-build -c Release --project tools/LobbyPatcher -- --apply "$game"
           dotnet run --no-build -c Release --project tools/LobbyPatcher -- --verify "$game"
