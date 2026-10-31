@@ -212,7 +212,7 @@ static void PatchInGameDropdown(TypeDefinition type)
     var addCalls = previous.Where(i =>
         i.Operand is MethodReference m
         && m.Name == "Add"
-        && m.DeclaringType.FullName.StartsWith("System.Collections.Generic.List\x601<System.String>", StringComparison.Ordinal))
+        && m.DeclaringType.FullName.StartsWith("System.Collections.Generic.List\x60" + "1<System.String>", StringComparison.Ordinal))
         .ToArray();
     if (addCalls.Length < 8)
         throw new InvalidOperationException("Pause-menu list initializer shape changed; cannot safely patch.");
