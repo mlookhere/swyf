@@ -184,6 +184,15 @@ jobs:
           test "$(cat "${archived[0]}")" = "historical-backup-never-overwrite"
           dotnet run --no-build -c Release --project tools/LobbyPatcher -- --restore "$game"
           cmp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$managed/ScriptsAssDef.dll"
+
+          # Regression: restore must work on the formerly crash-prone patch as well.
+          legacy="$RUNNER_TEMP/swyf-legacy-patcher"
+          mkdir -p "$legacy"
+          git show e82803371cfaff4188984529887e834bc197bf43:tools/LobbyPatcher/Program.cs > "$legacy/Program.cs"
+          cp tools/LobbyPatcher/LobbyPatcher.csproj "$legacy/LobbyPatcher.csproj"
+          dotnet run -c Release --project "$legacy/LobbyPatcher.csproj" -- --apply "$game"
+          dotnet run --no-build -c Release --project tools/LobbyPatcher -- --restore "$game"
+          cmp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$managed/ScriptsAssDef.dll"
       - name: Build Windows patcher utility (not vendor DLL)
         shell: bash
         run: |
