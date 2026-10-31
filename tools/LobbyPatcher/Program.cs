@@ -316,6 +316,12 @@ static void Inspect(AssemblyDefinition assembly)
     var steam = FindType(assembly, "SteamCreateLobbyForServer");
     Console.WriteLine($"SteamCreateLobbyForServer.TryApplyLobbyMemberLimitFromHostSettings clamp maxima: [{string.Join(", ", ClampUpperBounds(FindMethod(steam, "TryApplyLobbyMemberLimitFromHostSettings")))}]");
     Console.WriteLine($"32 UI entries installed: {Has32Options(max)}");
+    var (pauseMethod, pauseSetter) = FindPauseMenuSetter(FindType(assembly, "PauseMenuToolkitController"));
+    var instructions = pauseMethod.Body.Instructions;
+    int setterIndex = instructions.IndexOf(pauseSetter);
+    Console.WriteLine($"Pause-menu dropdown original IL around set_choices ({pauseMethod.Name}):");
+    for (int i = Math.Max(0, setterIndex - 90); i <= Math.Min(instructions.Count - 1, setterIndex + 3); i++)
+        Console.WriteLine($"  {i}: {instructions[i]}");
 }
 
 static void Apply(string originalPath, string backupPath)
