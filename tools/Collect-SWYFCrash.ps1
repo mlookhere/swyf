@@ -1,4 +1,3 @@
-#requires -Version 7.0
 <#
 .SYNOPSIS
 Collects local Unity game-crash evidence without modifying the game.
@@ -9,7 +8,7 @@ Crash dumps themselves are NOT copied (they may contain personal data).
 The ZIP is local-only; review it before sharing.
 
 .EXAMPLE
-pwsh -File .\tools\Collect-SWYFCrash.ps1 -GamePath "E:\SteamLibrary\steamapps\common\Scam With Your Friends"
+powershell -File .\tools\Collect-SWYFCrash.ps1 -GamePath "E:\SteamLibrary\steamapps\common\Scam With Your Friends"
 #>
 [CmdletBinding()]
 param(
@@ -89,7 +88,7 @@ try {
         }
     }
 
-    if ($IsWindows) {
+    if ($env:OS -eq 'Windows_NT') {
         try {
             $events = @(Get-WinEvent -FilterHashtable @{
                 LogName = 'Application'
