@@ -37,14 +37,21 @@ try
         case "--restore":
             if (!File.Exists(backupPath))
                 throw new InvalidOperationException("No original backup exists to restore.");
-            // Refuse to install a stale backup over a game updated by Steam.
+            // Accept either the older 32-player patch (with the crashing helper)
+            // or the corrected one. Never overwrite a Steam-updated original.
             using (var installed = Open(assemblyPath))
-                Verify(installed);
             using (var original = Open(backupPath))
             {
+                Verify32Capacity(installed);
+                var pause = FindType(installed, "PauseMenuToolkitController");
+                if (!HasExpandedPauseMenu(pause) &&
+                    !pause.Methods.Any(m => m.Name == "SWYF32_GetLobbySizeChoices"))
+                    throw new InvalidOperationException("Installed game is not a recognized 32-player patch.");
                 var field = FindType(original, "MaxLobbySizeSetting").Fields.Single(f => f.Name == "MaximumLobbySize");
                 if (!field.HasConstant || Convert.ToInt32(field.Constant) != 8)
                     throw new InvalidOperationException("Backup does not contain the expected original eight-player assembly.");
+                if (installed.MainModule.Mvid != original.MainModule.Mvid)
+                    throw new InvalidOperationException("Backup belongs to a different game build (MVID mismatch).");
             }
             File.Copy(backupPath, assemblyPath, overwrite: true);
             File.Delete(backupPath);
@@ -165,50 +172,87 @@ static void ReplaceOptions(TypeDefinition type)
     Console.WriteLine("Patched UI options to contiguous 1..32 (preserves selected-index mapping).");
 }
 
-static void PatchInGameDropdown(TypeDefinition type)
+// Use the same IList/Add IL emitted by the original UI builder.
+// Adding a new helper method and redirecting a call inside BindHostSettings
+// caused a reproducible Mono JIT crash when the pause menu opened.
+static MethodDefinition PauseMenuBinder(TypeDefinition type)
 {
     const string dropdownName = "host-lobby-size-dropdown";
-    var target = type.Methods.Single(method => method.HasBody
+    return type.Methods.Single(method => method.HasBody
         && method.Body.Instructions.Any(i =>
             i.OpCode.Code == Code.Ldstr && Equals(i.Operand, dropdownName))
         && method.Body.Instructions.Any(i =>
             i.Operand is MethodReference call && call.Name == "set_choices"));
-    var instructions = target.Body.Instructions;
+}
+
+static (MethodDefinition Method, Instruction Setter) FindPauseMenuSetter(TypeDefinition type)
+{
+    var method = PauseMenuBinder(type);
+    var instructions = method.Body.Instructions;
     int anchor = instructions.ToList().FindIndex(i =>
-        i.OpCode.Code == Code.Ldstr && Equals(i.Operand, dropdownName));
-    var setter = instructions.Skip(anchor).First(i => i.Operand is MethodReference call
-        && call.Name == "set_choices"
+        i.OpCode.Code == Code.Ldstr && Equals(i.Operand, "host-lobby-size-dropdown"));
+    var setter = instructions.Skip(anchor).First(i =>
+        i.Operand is MethodReference call && call.Name == "set_choices"
         && call.Parameters.Count == 1);
+    return (method, setter);
+}
+
+static void PatchInGameDropdown(TypeDefinition type)
+{
+    var (method, setter) = FindPauseMenuSetter(type);
+    var instructions = method.Body.Instructions;
     int setterIndex = instructions.IndexOf(setter);
-    var methods = instructions.Take(setterIndex)
-        .Select(i => i.Operand).OfType<MethodReference>().ToArray();
-    var constructor = methods.Last(m => m.Name == ".ctor"
-        && m.DeclaringType.FullName.StartsWith("System.Collections.Generic.List\x60" + "1<System.String>", StringComparison.Ordinal));
-    var add = methods.Last(m => m.Name == "Add"
-        && m.DeclaringType.FullName.StartsWith("System.Collections.Generic.List\x60" + "1<System.String>", StringComparison.Ordinal));
+    var previous = instructions.Take(setterIndex).ToArray();
 
-    if (!Enumerable.Range(1, 8).All(n => instructions.Take(setterIndex).Any(
-        i => i.OpCode.Code == Code.Ldstr && Equals(i.Operand, n.ToString()))))
-        throw new InvalidOperationException("Pause-menu lobby size choices do not match expected 1..8 shape.");
+    // Abort if the original game's IL has changed, rather than corrupting it.
+    foreach (int i in Enumerable.Range(1, 8))
+        if (!previous.Any(x => x.OpCode.Code == Code.Ldstr && Equals(x.Operand, i.ToString())))
+            throw new InvalidOperationException($"Pause menu has no original choice {i}.");
 
-    var setterRef = (MethodReference)setter.Operand;
-    var optionsType = type.Module.ImportReference(setterRef.Parameters[0].ParameterType);
-    var helper = new MethodDefinition("SWYF32_GetLobbySizeChoices",
-        MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig, optionsType);
-    helper.Parameters.Add(new ParameterDefinition("oldChoices", ParameterAttributes.None, optionsType));
-    type.Methods.Add(helper);
+    var addCalls = previous.Where(i =>
+        i.Operand is MethodReference m
+        && m.Name == "Add"
+        && m.DeclaringType.FullName.StartsWith("System.Collections.Generic.List\x601<System.String>", StringComparison.Ordinal))
+        .ToArray();
+    if (addCalls.Length < 8)
+        throw new InvalidOperationException("Pause-menu list initializer shape changed; cannot safely patch.");
 
-    var gen = helper.Body.GetILProcessor();
-    gen.Append(Instruction.Create(OpCodes.Newobj, constructor));
-    for (int i = 1; i <= TargetSize; i++)
+    var add = (MethodReference)addCalls[^1].Operand;
+    var callOpcode = addCalls[^1].OpCode;
+    if (callOpcode.Code is not (Code.Call or Code.Callvirt))
+        throw new InvalidOperationException("Unexpected List<string>.Add invocation.");
+    // At set_choices the stack holds [dropdown, List<string>]. Keep that
+    // original list on the stack while appending additional strings to it.
+    var il = method.Body.GetILProcessor();
+    foreach (int i in Enumerable.Range(9, TargetSize - 8))
     {
-        gen.Append(Instruction.Create(OpCodes.Dup));
-        gen.Append(Instruction.Create(OpCodes.Ldstr, i.ToString()));
-        gen.Append(Instruction.Create(OpCodes.Callvirt, add));
+        il.InsertBefore(setter, Instruction.Create(OpCodes.Dup));
+        il.InsertBefore(setter, Instruction.Create(OpCodes.Ldstr, i.ToString()));
+        il.InsertBefore(setter, Instruction.Create(callOpcode, add));
     }
-    gen.Append(Instruction.Create(OpCodes.Ret));
-    target.Body.GetILProcessor().InsertBefore(setter, Instruction.Create(OpCodes.Call, helper));
-    Console.WriteLine("Patched in-game pause-menu dropdown choices to 1..32.");
+    Console.WriteLine("Patched in-game pause-menu dropdown choices in place (1..32), with no injected method calls.");
+}
+
+static bool HasExpandedPauseMenu(TypeDefinition type)
+{
+    var (method, setter) = FindPauseMenuSetter(type);
+    var instructions = method.Body.Instructions;
+    int index = instructions.IndexOf(setter);
+    if (index < (TargetSize - 8) * 3)
+        return false;
+    // The 24 appended choices must be contiguous immediately before the
+    // existing property setter, with balanced stack operations.
+    for (int i = 9; i <= TargetSize; i++)
+    {
+        int offset = index - (TargetSize - i + 1) * 3;
+        if (instructions[offset].OpCode.Code != Code.Dup
+            || instructions[offset + 1].OpCode.Code != Code.Ldstr
+            || !Equals(instructions[offset + 1].Operand, i.ToString())
+            || instructions[offset + 2].Operand is not MethodReference m
+            || m.Name != "Add")
+            return false;
+    }
+    return !type.Methods.Any(m => m.Name == "SWYF32_GetLobbySizeChoices");
 }
 
 static bool Has32Options(TypeDefinition type)
@@ -231,7 +275,7 @@ static bool Has32Options(TypeDefinition type)
             && Constant(prior[Array.IndexOf(prior, instruction) - 1]) == TargetSize);
 }
 
-static void Verify(AssemblyDefinition assembly)
+static void Verify32Capacity(AssemblyDefinition assembly)
 {
     var max = FindType(assembly, "MaxLobbySizeSetting");
     var constant = max.Fields.Single(f => f.Name == "MaximumLobbySize");
@@ -251,13 +295,12 @@ static void Verify(AssemblyDefinition assembly)
     if (!FindMethod(manager, "Awake").Body.Instructions.Any(i => Constant(i) == TargetSize))
         throw new InvalidOperationException("NetworkManager initial capacity not patched.");
 
+static void Verify(AssemblyDefinition assembly)
+{
+    Verify32Capacity(assembly);
     var pause = FindType(assembly, "PauseMenuToolkitController");
-    var helper = pause.Methods.SingleOrDefault(m => m.Name == "SWYF32_GetLobbySizeChoices");
-    if (helper == null || !helper.HasBody
-        || helper.Body.Instructions.Count(i => i.OpCode.Code == Code.Ldstr
-            && i.Operand is string value && int.TryParse(value, out int n)
-            && n >= 1 && n <= TargetSize) != TargetSize)
-        throw new InvalidOperationException("In-game lobby dropdown is not extended to 32.");
+    if (!HasExpandedPauseMenu(pause))
+        throw new InvalidOperationException("In-game lobby dropdown IL is not safely extended to 32.");
 
     Console.WriteLine("Verified 32-player UI (both menus), persisted preferences, Mirror, and Steam lobby limits.");
     Console.WriteLine("Real 9/16/32-player online compatibility is NOT established by this binary check.");
