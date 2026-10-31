@@ -188,7 +188,8 @@ jobs:
           # Regression: restore must work on the formerly crash-prone patch as well.
           legacy="$RUNNER_TEMP/swyf-legacy-patcher"
           mkdir -p "$legacy"
-          git show e82803371cfaff4188984529887e834bc197bf43:tools/LobbyPatcher/Program.cs > "$legacy/Program.cs"
+          git fetch --no-tags --depth=1 origin e82803371cfaff4188984529887e834bc197bf43
+          git show FETCH_HEAD:tools/LobbyPatcher/Program.cs > "$legacy/Program.cs"
           cp tools/LobbyPatcher/LobbyPatcher.csproj "$legacy/LobbyPatcher.csproj"
           dotnet run -c Release --project "$legacy/LobbyPatcher.csproj" -- --apply "$game"
           dotnet run --no-build -c Release --project tools/LobbyPatcher -- --restore "$game"
