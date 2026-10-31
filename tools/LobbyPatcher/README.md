@@ -34,6 +34,26 @@ To build locally, install .NET 10 SDK and run:
 dotnet publish tools/LobbyPatcher/LobbyPatcher.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
+## Intermittent crashes: capture evidence before further patching
+
+A passing IL rewrite/decompiler test does **not** establish runtime stability. In particular, the game may contain player allocation or voice/network assumptions for eight participants, or Steam/Unity may have independently changed since the packaged build.
+
+1. Close the game. After a crash, avoid relaunching before capturing `Player.log` (Unity can rotate it).
+2. Open Windows PowerShell in your game directory and download the audit script from this repository:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/mlookhere/swyf/audit/32-player-lobby/tools/Collect-SWYFCrash.ps1' -OutFile '.\Collect-SWYFCrash.ps1'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File '.\Collect-SWYFCrash.ps1' -GamePath 'E:\SteamLibrary\steamapps\common\Scam With Your Friends'
+```
+
+The script finds likely Unity Player logs under `%USERPROFILE%\AppData\LocalLow`, archives their last 12,000 lines, hashes the game assemblies and captures matching Windows Application crash events. It masks common Steam IDs, IP addresses, credentials and home-directory usernames, but cannot guarantee every secret is removed: **review the ZIP before sharing it**. It never uploads files, copies memory dumps or changes game files.
+
+3. Record whether the crash occurred on the main menu, while creating a lobby, when the ninth person joined, after an in-game lobby-size change, during scene load, or during gameplay. Note exact selected lobby capacity and actual player count.
+4. Reproduce with 8 or fewer players, then 9–12, then 16 and 32. If the game also crashes at 8, restore the original game assembly and repeat an unchanged scenario to distinguish patched-code issues from a base-game or system problem.
+5. Before restoring, keep the game closed and verify the original backup is from the **same Steam build**. Steam's Verify Integrity can restore official files but will remove the patch.
+
+Do not assume that rising the Steam lobby limit resolves memory, object spawning, proximity voice, network sync, or game-server restrictions.
+
 ## What remains unverified
 
 Passing tests establish that the patched DLL can be written, read, decompiled, and restored. They do **not** prove that 32 actual players can play through the official backend. Test join codes, Steam invites, public lobby discovery, connect/reconnect at 9/16/32 players, late joins, player spawning/desks, peer voice chat, UI rosters, game progression, performance and joining player 33. All clients must use compatible game versions. The backend may still enforce an independent cap.
