@@ -26,7 +26,7 @@ Use the actual folder containing `Scam With Your Friends.exe` if your active Ste
 .\LobbyPatcher.exe --restore "F:\Projects\swyf"
 ```
 
-The original game assembly is backed up alongside it as `ScriptsAssDef.dll.before-32-player-patch.bak`. The patcher refuses to overwrite an existing backup and refuses to patch unrecognized/already patched assembly metadata. After a Steam update, reassess the new game build before trying to reapply an old patcher; **do not restore an old backup over a newer Steam update**.
+The original game assembly is backed up alongside it as `ScriptsAssDef.dll.before-32-player-patch.bak`. If Steam has replaced the game DLL while leaving an older backup, the patcher **archives that older backup with a unique name** and creates a fresh backup of the current unpatched DLL. It never overwrites the old backup. The patcher also refuses to patch unrecognized/already patched assembly metadata. After a Steam update, reassess the new game build before trying to reapply an old patcher; **do not restore an old backup over a newer Steam update**.
 
 To build locally, install .NET 10 SDK and run:
 
