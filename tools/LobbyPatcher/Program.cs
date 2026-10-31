@@ -37,6 +37,15 @@ try
         case "--restore":
             if (!File.Exists(backupPath))
                 throw new InvalidOperationException("No original backup exists to restore.");
+            // Refuse to install a stale backup over a game updated by Steam.
+            using (var installed = Open(assemblyPath))
+                Verify(installed);
+            using (var original = Open(backupPath))
+            {
+                var field = FindType(original, "MaxLobbySizeSetting").Fields.Single(f => f.Name == "MaximumLobbySize");
+                if (!field.HasConstant || Convert.ToInt32(field.Constant) != 8)
+                    throw new InvalidOperationException("Backup does not contain the expected original eight-player assembly.");
+            }
             File.Copy(backupPath, assemblyPath, overwrite: true);
             File.Delete(backupPath);
             Console.WriteLine("Original game assembly restored.");
