@@ -267,8 +267,6 @@ static void Inspect(AssemblyDefinition assembly)
 
 static void Apply(string originalPath, string backupPath)
 {
-    if (File.Exists(backupPath))
-        throw new InvalidOperationException($"Original backup already exists: {backupPath}. Refusing to overwrite it.");
     string temporaryPath = originalPath + ".patching.tmp";
     if (File.Exists(temporaryPath))
         throw new InvalidOperationException($"Temporary file already exists: {temporaryPath}");
@@ -294,8 +292,29 @@ static void Apply(string originalPath, string backupPath)
         }
         using (var check = Open(temporaryPath))
             Verify(check);
-        File.Copy(originalPath, backupPath, overwrite: false);
-        File.Move(temporaryPath, originalPath, overwrite: true);
+        // Steam updates may restore the original DLL while leaving a previous backup behind.
+        // Keep the previous backup instead of overwriting or deleting it.
+        string? archivedBackup = null;
+        if (File.Exists(backupPath))
+        {
+            archivedBackup = $"{backupPath}.archived-{DateTime.UtcNow:yyyyMMddTHHmmssfffZ}-{Guid.NewGuid():N}";
+            File.Move(backupPath, archivedBackup);
+            Console.WriteLine($"Existing backup preserved: {archivedBackup}");
+        }
+
+        try
+        {
+            File.Copy(originalPath, backupPath, overwrite: false);
+            File.Move(temporaryPath, originalPath, overwrite: true);
+        }
+        catch
+        {
+            if (File.Exists(backupPath))
+                File.Delete(backupPath);
+            if (archivedBackup != null && !File.Exists(backupPath))
+                File.Move(archivedBackup, backupPath);
+            throw;
+        }
         Console.WriteLine($"Patched {originalPath}");
         Console.WriteLine($"Original backup: {backupPath}");
     }
