@@ -151,6 +151,11 @@ jobs:
           # Regression: Steam restores the game DLL, leaving an older backup behind.
           old_backup="$managed/ScriptsAssDef.dll.before-32-player-patch.bak"
           printf 'historical-backup-never-overwrite' > "$old_backup"
+          if dotnet run --no-build -c Release --project tools/LobbyPatcher -- --restore "$game"; then
+            echo "ERROR: stale backup overwrote an unpatched game" >&2
+            exit 1
+          fi
+          cmp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$managed/ScriptsAssDef.dll"
           dotnet run --no-build -c Release --project tools/LobbyPatcher -- --apply "$game"
           dotnet run --no-build -c Release --project tools/LobbyPatcher -- --verify "$game"
           cmp "Scam With Your Friends_Data/Managed/ScriptsAssDef.dll" "$old_backup"
