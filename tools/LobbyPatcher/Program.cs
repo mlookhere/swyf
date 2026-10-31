@@ -294,6 +294,7 @@ static void Verify32Capacity(AssemblyDefinition assembly)
     var manager = FindType(assembly, "DeveloperSpectatorNetworkManager");
     if (!FindMethod(manager, "Awake").Body.Instructions.Any(i => Constant(i) == TargetSize))
         throw new InvalidOperationException("NetworkManager initial capacity not patched.");
+}
 
 static void Verify(AssemblyDefinition assembly)
 {
